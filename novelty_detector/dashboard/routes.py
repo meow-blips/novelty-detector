@@ -70,7 +70,7 @@ def _get_pipeline() -> Pipeline:
                 num_perm=settings.minhash_num_perm,
                 shingle_size=settings.shingle_size,
             ),
-            skip_semantic=False,
+            skip_semantic=True,
             index_novel_documents=True,
         )
         # Warm-up: re-index all existing DocumentRecords so the LSH is
