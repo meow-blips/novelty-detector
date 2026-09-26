@@ -11,7 +11,7 @@ datasketch==1.6.5            # MinHash signatures + LSH index
 
 # ── Semantic Similarity (Stage 2) ───────────────────────────
 sentence-transformers==3.3.1 # Transformer-based sentence embeddings
-torch==2.5.1                 # Required backend for sentence-transformers
+   torch==2.9.0                 # Required backend for sentence-transformers
 transformers==4.47.1         # HuggingFace model hub access
 
 # ── Numerical / Scientific Computing ────────────────────────
