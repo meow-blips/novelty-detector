@@ -217,6 +217,7 @@ def documents():
         pagination=pagination,
         status_filter=status_filter,
         search=search,
+        settings=settings,
     )
 
 
@@ -247,6 +248,7 @@ def flagged():
         pagination=pagination,
         verdict_filter=verdict_filter,
         review_filter=review_filter,
+      settings=settings,
     )
 
 
@@ -322,6 +324,7 @@ def review(cmp_id: int):
         diff_a=diff_a,
         diff_b=diff_b,
         form=form,
+      settings=settings,
     )
 
 
