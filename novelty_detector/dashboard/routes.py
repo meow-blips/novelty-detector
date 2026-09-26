@@ -383,12 +383,11 @@ def submit_document():
             result = pipeline.process(raw_text, doc_id=doc_id)
         except PipelineError as exc:
             flash(f"Pipeline error: {exc}", "danger")
-            return render_template("submit.html", form=form)
+            return render_template("submit.html", form=form, settings=settings)
         except Exception as exc:
             logger.exception("Unexpected error processing doc_id={!r}", doc_id)
             flash(f"Unexpected error: {exc}", "danger")
-            return render_template("submit.html", form=form)
-
+            return render_template("submit.html", form=form, settings=settings)
         verdict = result.verdict
         flash(
             f"Document '{doc_id}' processed. Verdict: {verdict.upper()}",
@@ -409,7 +408,7 @@ def submit_document():
 
         return redirect(url_for("dashboard.index"))
 
-    return render_template("submit.html", form=form)
+    return render_template("submit.html", form=form, settings=settings)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
