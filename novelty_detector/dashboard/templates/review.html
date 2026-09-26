@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% block title %}Review #{{ comparison.id }} — Novelty Detector{% endblock %}
+{% block page_title %}Review Pair #{{ comparison.id }}{% endblock %}
+
+{% block content %}
+
+<!-- ── Score Summary Row ───────────────────────────────────────────────────── -->
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem;margin-bottom:1.5rem;">
+
+  <div class="stat-card {% if comparison.verdict == 'duplicate' %}duplicate{% elif comparison.verdict == 'near-duplicate' %}near-dup{% else %}novel{% endif %}">
+    <span class="stat-label">System Verdict</span>
+    <span class="stat-value" style="font-size:1.3rem">{{ comparison.verdict | upper }}</span>
+  </div>
+
+  <div class="stat-card">
+    <span class="stat-label">Jaccard (Stage 1)</span>
+    <span class="stat-value" style="font-size:1.5rem;color:var(--color-warning)">
+      {{ comparison.jaccard_estimate | pct }}
+    </span>
+    <span class="text-muted" style="font-size:0.72rem">Threshold: {{ comparison.lsh_threshold_used | pct }}</span>
+  </div>
+
+  {% if comparison.cosine_similarity is not none %}
+  <div class="stat-card">
+    <span class="stat-label">Cosine (Stage 2)</span>
+    <span class="stat-value" style="font-size:1.5rem;color:var(--color-danger)">
+      {{ comparison.cosine_similarity | pct }}
+    </span>
+    <span class="text-muted" style="font-size:0.72rem">Threshold: {{ comparison.semantic_threshold_used | pct }}</span>
+  </div>
+  {% endif %}
+
+  <div class="stat-card">
+    <span class="stat-label">Review Status</span>
+    <span class="stat-value" style="font-size:1.1rem;
+      color:{% if comparison.review_status == 'pending' %}var(--color-warning){% elif comparison.review_status == 'confirmed' %}var(--color-success){% else %}var(--color-info){% endif %}">
+      {{ comparison.review_status | upper }}
+    </span>
+    <span class="text-muted" style="font-size:0.72rem">Compared {{ comparison.compared_at.strftime('%b %d %Y, %H:%M') }}</span>
+  </div>
+</div>
+
+<!-- ── Score Bars ──────────────────────────────────────────────────────────── -->
+<div class="section-card mb-2" style="margin-bottom:1.2rem;">
+  <div class="section-header"><span>📈</span><h2>Similarity Breakdown</h2></div>
+  <div style="padding:1.2rem 1.4rem;display:grid;gap:1rem;">
+
+    <div class="score-row">
+      <span class="score-row-label">Jaccard Similarity (lexical overlap)</span>
+      <div class="score-bar-wrap">
+        <div class="score-bar-bg">
+          <div class="score-bar-fill {{ comparison.jaccard_estimate | score_color | replace('badge-','') }}"
+               style="width:{{ (comparison.jaccard_estimate * 100)|int }}%"></div>
+        </div>
+        <span class="score-bar-label">{{ comparison.jaccard_estimate | pct }}</span>
+      </div>
+    </div>
+
+    {% if comparison.cosine_similarity is not none %}
+    <div class="score-row">
+      <span class="score-row-label">Cosine Similarity (semantic meaning)</span>
+      <div class="score-bar-wrap">
+        <div class="score-bar-bg">
+          <div class="score-bar-fill {{ comparison.cosine_similarity | score_color | replace('badge-','') }}"
+               style="width:{{ (comparison.cosine_similarity * 100)|int }}%"></div>
+        </div>
+        <span class="score-bar-label">{{ comparison.cosine_similarity | pct }}</span>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+
+<!-- ── Side-by-Side Diff ───────────────────────────────────────────────────── -->
+<div class="section-card" style="margin-bottom:1.2rem;">
+  <div class="section-header">
+    <span>↔️</span>
+    <h2>Side-by-Side Comparison</h2>
+    <button class="btn btn-outline btn-sm ml-auto diff-toggle-btn" data-target="diff-body">Hide</button>
+  </div>
+
+  <div id="diff-body">
+    <div class="diff-grid">
+
+      <!-- Query document -->
+      <div class="diff-pane">
+        <div class="diff-pane-header">
+          <span style="color:var(--color-danger)">●</span>
+          Incoming Document
+          <span class="text-mono text-muted" style="font-size:0.7rem;margin-left:auto;">
+            {{ comparison.query_doc_id }}
+          </span>
+        </div>
+        {% if query_doc %}
+          <div class="diff-content">{{ diff_a | safe }}</div>
+          <div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--color-border);font-size:0.72rem;color:var(--color-text-muted)">
+            {{ query_doc.token_count }} tokens ·
+            Submitted {{ query_doc.submitted_at.strftime('%b %d %Y') }} ·
+            <span class="badge {{ query_doc.status | verdict_color }}">{{ query_doc.status }}</span>
+          </div>
+        {% else %}
+          <p class="text-muted">Document text not available.</p>
+        {% endif %}
+      </div>
+
+      <!-- Candidate document -->
+      <div class="diff-pane">
+        <div class="diff-pane-header">
+          <span style="color:var(--color-success)">●</span>
+          Corpus Document
+          <span class="text-mono text-muted" style="font-size:0.7rem;margin-left:auto;">
+            {{ comparison.candidate_doc_id }}
+          </span>
+        </div>
+        {% if candidate_doc %}
+          <div class="diff-content">{{ diff_b | safe }}</div>
+          <div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--color-border);font-size:0.72rem;color:var(--color-text-muted)">
+            {{ candidate_doc.token_count }} tokens ·
+            Submitted {{ candidate_doc.submitted_at.strftime('%b %d %Y') }} ·
+            <span class="badge {{ candidate_doc.status | verdict_color }}">{{ candidate_doc.status }}</span>
+          </div>
+        {% else %}
+          <p class="text-muted">Document text not available.</p>
+        {% endif %}
+      </div>
+
+    </div><!-- /diff-grid -->
+
+    <!-- Diff legend -->
+    <div style="padding:0.6rem 1.4rem;border-top:1px solid var(--color-border);
+                display:flex;gap:1.5rem;font-size:0.75rem;color:var(--color-text-muted);">
+      <span><mark class="diff-del">removed</mark> — in incoming only</span>
+      <span><mark class="diff-ins">added</mark> — in corpus only</span>
+      <span>Unmarked text — identical</span>
+    </div>
+  </div><!-- /diff-body -->
+</div>
+
+<!-- ── Review Decision Form ────────────────────────────────────────────────── -->
+<div class="section-card">
+  <div class="section-header"><span>✏️</span><h2>Your Review Decision</h2></div>
+  <div style="padding:1.4rem;">
+
+    {% if comparison.reviewer_note %}
+    <div class="alert alert-info mb-2">
+      <span>💬</span>
+      <span><strong>Previous note:</strong> {{ comparison.reviewer_note }}</span>
+    </div>
+    {% endif %}
+
+    <form method="post" novalidate>
+      {{ form.hidden_tag() }}
+      {{ form.comparison_id() }}
+
+      <div class="form-grid">
+
+        <!-- Decision -->
+        <div class="form-group">
+          {{ form.decision.label(class="form-label") }}
+          {{ form.decision(class="form-control", id="decision") }}
+          {% for err in form.decision.errors %}
+            <span class="form-error">{{ err }}</span>
+          {% endfor %}
+        </div>
+
+        <!-- Override verdict — shown conditionally via JS -->
+        <div class="form-group" id="verdict-override-row" style="display:none;">
+          {{ form.new_verdict.label(class="form-label") }}
+          {{ form.new_verdict(class="form-control") }}
+        </div>
+
+        <!-- Reviewer note -->
+        <div class="form-group">
+          {{ form.reviewer_note.label(class="form-label") }}
+          {{ form.reviewer_note(class="form-control") }}
+          {% for err in form.reviewer_note.errors %}
+            <span class="form-error">{{ err }}</span>
+          {% endfor %}
+        </div>
+
+        <!-- Actions -->
+        <div class="d-flex gap-1" style="margin-top:0.5rem;">
+          {{ form.submit(class="btn btn-primary") }}
+          <a href="{{ url_for('dashboard.flagged') }}" class="btn btn-outline">← Back to Flagged</a>
+        </div>
+
+      </div><!-- /form-grid -->
+    </form>
+  </div>
+</div>
+
+{% endblock %}

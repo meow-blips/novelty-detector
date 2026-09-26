@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Novelty Detector{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔍</text></svg>" />
+</head>
+<body>
+
+  <!-- ═══ Sidebar ═══════════════════════════════════════════ -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-name">AI Research Tool</div>
+      <div class="brand-title">Novelty &amp;<br>Duplicate Detector</div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+
+      <a href="{{ url_for('dashboard.index') }}"
+         class="nav-item {% if request.endpoint == 'dashboard.index' %}active{% endif %}">
+        <span class="nav-icon">📊</span> Dashboard
+      </a>
+
+      <a href="{{ url_for('dashboard.submit_document') }}"
+         class="nav-item {% if request.endpoint == 'dashboard.submit_document' %}active{% endif %}">
+        <span class="nav-icon">📤</span> Submit Document
+      </a>
+
+      <div class="nav-section-label">Review</div>
+
+      <a href="{{ url_for('dashboard.documents') }}"
+         class="nav-item {% if request.endpoint == 'dashboard.documents' %}active{% endif %}">
+        <span class="nav-icon">📄</span> All Documents
+      </a>
+
+      <a href="{{ url_for('dashboard.flagged') }}"
+         class="nav-item {% if request.endpoint == 'dashboard.flagged' %}active{% endif %}">
+        <span class="nav-icon">🚩</span> Flagged Pairs
+        {% if pending_reviews is defined and pending_reviews %}
+          <span class="nav-badge">{{ pending_reviews }}</span>
+        {% endif %}
+      </a>
+
+      <div class="nav-section-label">Config</div>
+
+      <a href="{{ url_for('dashboard.threshold_settings') }}"
+         class="nav-item {% if request.endpoint == 'dashboard.threshold_settings' %}active{% endif %}">
+        <span class="nav-icon">⚙️</span> Thresholds
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      LSH <span style="color:var(--color-primary)">{{ settings.lsh_threshold }}</span> ·
+      Sem <span style="color:var(--color-primary)">{{ settings.semantic_threshold }}</span>
+    </div>
+  </aside>
+
+  <!-- ═══ Main ═══════════════════════════════════════════════ -->
+  <div class="main-content">
+    <!-- Top bar -->
+    <header class="topbar">
+      <span class="topbar-title">{% block page_title %}Dashboard{% endblock %}</span>
+      <div class="topbar-actions">
+        <a href="{{ url_for('dashboard.submit_document') }}" class="btn btn-primary btn-sm">
+          + Submit Document
+        </a>
+      </div>
+    </header>
+
+    <!-- Flash messages -->
+    <div class="flash-container mt-1">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}" data-autodismiss="6000">
+            <span>
+              {% if category == 'success' %}✅{% elif category == 'warning' %}⚠️{% elif category == 'danger' %}❌{% else %}ℹ️{% endif %}
+            </span>
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endwith %}
+    </div>
+
+    <!-- Page body -->
+    <main class="page-body">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

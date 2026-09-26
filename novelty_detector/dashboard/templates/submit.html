@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}Submit Document — Novelty Detector{% endblock %}
+{% block page_title %}Submit Document{% endblock %}
+
+{% block content %}
+
+<div style="display:grid;grid-template-columns:1fr 300px;gap:1.2rem;align-items:start;">
+
+  <!-- Submission Form -->
+  <div class="section-card">
+    <div class="section-header">
+      <span>📤</span>
+      <h2>Analyse a New Document</h2>
+    </div>
+    <div style="padding:1.4rem;">
+      <form method="post" novalidate>
+        {{ form.hidden_tag() }}
+        <div class="form-grid">
+
+          <!-- Document ID -->
+          <div class="form-group">
+            {{ form.doc_id.label(class="form-label") }}
+            {{ form.doc_id(class="form-control") }}
+            <span class="form-hint">A stable, unique identifier — filename, UUID, or row ID.</span>
+            {% for err in form.doc_id.errors %}
+              <span class="form-error">{{ err }}</span>
+            {% endfor %}
+          </div>
+
+          <!-- Raw Text -->
+          <div class="form-group">
+            {{ form.raw_text.label(class="form-label") }}
+            {{ form.raw_text(class="form-control", rows=14) }}
+            <div class="d-flex align-center gap-1 mt-1">
+              <span class="form-hint" id="char-counter" style="margin-top:0">0 characters</span>
+            </div>
+            {% for err in form.raw_text.errors %}
+              <span class="form-error">{{ err }}</span>
+            {% endfor %}
+          </div>
+
+          <!-- Submit -->
+          <div class="d-flex gap-1">
+            {{ form.submit(class="btn btn-primary") }}
+            <a href="{{ url_for('dashboard.index') }}" class="btn btn-outline">Cancel</a>
+          </div>
+
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Info panel -->
+  <div style="display:flex;flex-direction:column;gap:1rem;">
+
+    <div class="section-card">
+      <div class="section-header"><span>🔄</span><h2>Pipeline Steps</h2></div>
+      <div style="padding:1.2rem 1.4rem;font-size:0.83rem;line-height:1.75;color:var(--color-text-muted);">
+        <ol style="padding-left:1.1rem;display:grid;gap:0.5rem;">
+          <li><strong style="color:var(--color-text)">Preprocess</strong><br>
+              Tokenise, remove stopwords, stem.</li>
+          <li><strong style="color:var(--color-text)">Stage 1 — LSH</strong><br>
+              Shingle → MinHash → candidate retrieval.</li>
+          <li><strong style="color:var(--color-text)">Stage 2 — Semantic</strong><br>
+              Sentence-embedding cosine similarity.</li>
+          <li><strong style="color:var(--color-text)">Classify &amp; Log</strong><br>
+              Threshold-based verdict + DB persistence.</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-header"><span>⚙️</span><h2>Active Thresholds</h2></div>
+      <div style="padding:1rem 1.4rem;">
+        <div class="threshold-chips">
+          <div class="threshold-chip">LSH <span>{{ settings.lsh_threshold }}</span></div>
+          <div class="threshold-chip">Sem <span>{{ settings.semantic_threshold }}</span></div>
+          <div class="threshold-chip">Dup <span>{{ settings.duplicate_jaccard_threshold }}</span></div>
+        </div>
+        <a href="{{ url_for('dashboard.threshold_settings') }}"
+           style="font-size:0.75rem;color:var(--color-text-muted);display:block;margin-top:0.75rem;">
+          Adjust thresholds →
+        </a>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-header"><span>📊</span><h2>Possible Verdicts</h2></div>
+      <div style="padding:1rem 1.4rem;display:grid;gap:0.5rem;font-size:0.82rem;">
+        <div>
+          <span class="badge badge-success">novel</span>
+          <span class="text-muted" style="margin-left:0.5rem">No matches found.</span>
+        </div>
+        <div>
+          <span class="badge badge-warning">near-duplicate</span>
+          <span class="text-muted" style="margin-left:0.5rem">Paraphrase detected.</span>
+        </div>
+        <div>
+          <span class="badge badge-danger">duplicate</span>
+          <span class="text-muted" style="margin-left:0.5rem">Near-exact copy.</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /info panel -->
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Live character counter for the text area
+  const textarea = document.querySelector('textarea[name="raw_text"]');
+  const counter  = document.getElementById("char-counter");
+  if (textarea && counter) {
+    textarea.addEventListener("input", () => {
+      const len = textarea.value.length;
+      counter.textContent = `${len.toLocaleString()} character${len !== 1 ? "s" : ""}`;
+    });
+  }
+</script>
+{% endblock %}

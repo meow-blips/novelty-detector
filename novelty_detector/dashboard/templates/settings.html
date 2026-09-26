@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}Threshold Settings — Novelty Detector{% endblock %}
+{% block page_title %}Threshold Configuration{% endblock %}
+
+{% block content %}
+
+<div style="display:grid;grid-template-columns:1fr 340px;gap:1.2rem;align-items:start;">
+
+  <!-- Settings Form -->
+  <div class="section-card">
+    <div class="section-header">
+      <span>⚙️</span>
+      <h2>Adjust Pipeline Thresholds</h2>
+    </div>
+    <div style="padding:1.4rem;">
+
+      <div class="alert alert-warning mb-2">
+        ⚠️ Changes apply to the <strong>running process only</strong>.
+        Update <code>.env</code> to persist them across restarts.
+        The LSH index will be reset when you save.
+      </div>
+
+      <form method="post" novalidate>
+        {{ form.hidden_tag() }}
+        <div class="form-grid">
+
+          <!-- LSH Threshold -->
+          <div class="form-group">
+            {{ form.lsh_threshold.label(class="form-label") }}
+            <div class="range-group">
+              <div class="range-row">
+                <input type="range" class="form-range"
+                       min="0.01" max="0.99" step="0.05"
+                       value="{{ form.lsh_threshold.data or 0.5 }}">
+                <span class="range-value">{{ form.lsh_threshold.data or 0.5 }}</span>
+              </div>
+              {{ form.lsh_threshold(class="form-control mt-1", type="number") }}
+            </div>
+            <span class="form-hint">{{ form.lsh_threshold.description }}</span>
+            {% for err in form.lsh_threshold.errors %}
+              <span class="form-error">{{ err }}</span>
+            {% endfor %}
+          </div>
+
+          <!-- Semantic Threshold -->
+          <div class="form-group">
+            {{ form.semantic_threshold.label(class="form-label") }}
+            <div class="range-group">
+              <div class="range-row">
+                <input type="range" class="form-range"
+                       min="0.01" max="0.99" step="0.05"
+                       value="{{ form.semantic_threshold.data or 0.85 }}">
+                <span class="range-value">{{ form.semantic_threshold.data or 0.85 }}</span>
+              </div>
+              {{ form.semantic_threshold(class="form-control mt-1", type="number") }}
+            </div>
+            <span class="form-hint">{{ form.semantic_threshold.description }}</span>
+            {% for err in form.semantic_threshold.errors %}
+              <span class="form-error">{{ err }}</span>
+            {% endfor %}
+          </div>
+
+          <!-- Duplicate Jaccard Threshold -->
+          <div class="form-group">
+            {{ form.duplicate_jaccard_threshold.label(class="form-label") }}
+            <div class="range-group">
+              <div class="range-row">
+                <input type="range" class="form-range"
+                       min="0.01" max="1.0" step="0.05"
+                       value="{{ form.duplicate_jaccard_threshold.data or 0.9 }}">
+                <span class="range-value">{{ form.duplicate_jaccard_threshold.data or 0.9 }}</span>
+              </div>
+              {{ form.duplicate_jaccard_threshold(class="form-control mt-1", type="number") }}
+            </div>
+            <span class="form-hint">{{ form.duplicate_jaccard_threshold.description }}</span>
+            {% for err in form.duplicate_jaccard_threshold.errors %}
+              <span class="form-error">{{ err }}</span>
+            {% endfor %}
+          </div>
+
+          <div>
+            {{ form.submit(class="btn btn-primary") }}
+          </div>
+
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Explanation Panel -->
+  <div style="display:flex;flex-direction:column;gap:1rem;">
+
+    <div class="section-card">
+      <div class="section-header"><span>📖</span><h2>How Thresholds Work</h2></div>
+      <div style="padding:1.2rem 1.4rem;font-size:0.85rem;line-height:1.7;color:var(--color-text-muted);display:grid;gap:1rem;">
+
+        <div>
+          <strong style="color:var(--color-text)">🔵 Stage 1 — LSH Jaccard</strong><br>
+          Controls which document pairs enter the semantic stage.
+          <em>Lower</em> → more candidates, more false positives, slower Stage 2.
+          <em>Higher</em> → fewer candidates, may miss near-paraphrases.
+        </div>
+
+        <div>
+          <strong style="color:var(--color-text)">🔴 Stage 2 — Semantic Cosine</strong><br>
+          The cosine similarity threshold for labelling a pair
+          <span class="badge badge-warning">near-duplicate</span>.
+          Typical good values: <strong>0.80 – 0.92</strong>.
+        </div>
+
+        <div>
+          <strong style="color:var(--color-text)">⛔ Duplicate Jaccard Cutoff</strong><br>
+          Pairs above this Jaccard score skip Stage 2 entirely and are
+          immediately labelled <span class="badge badge-danger">duplicate</span>.
+          Usually set high (≥ 0.85).
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Current values chip display -->
+    <div class="section-card">
+      <div class="section-header"><span>📍</span><h2>Current Values</h2></div>
+      <div style="padding:1rem 1.4rem;">
+        <div class="threshold-chips">
+          <div class="threshold-chip">LSH <span>{{ settings.lsh_threshold }}</span></div>
+          <div class="threshold-chip">Sem <span>{{ settings.semantic_threshold }}</span></div>
+          <div class="threshold-chip">Dup <span>{{ settings.duplicate_jaccard_threshold }}</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

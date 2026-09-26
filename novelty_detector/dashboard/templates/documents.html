@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}Documents — Novelty Detector{% endblock %}
+{% block page_title %}All Documents{% endblock %}
+
+{% block content %}
+
+<div class="section-card">
+
+  <!-- Filter / Search Bar -->
+  <form method="get" class="filter-bar">
+    <input type="text" name="q" value="{{ search }}"
+           placeholder="Search by doc ID…" style="min-width:200px;" />
+
+    <label style="font-size:0.8rem;color:var(--color-text-muted)">Status</label>
+    <select name="status" onchange="this.form.submit()">
+      <option value="" {% if not status_filter %}selected{% endif %}>All</option>
+      <option value="novel"          {% if status_filter=='novel'          %}selected{% endif %}>Novel</option>
+      <option value="near-duplicate" {% if status_filter=='near-duplicate' %}selected{% endif %}>Near-Duplicate</option>
+      <option value="duplicate"      {% if status_filter=='duplicate'      %}selected{% endif %}>Duplicate</option>
+    </select>
+
+    <button type="submit" class="btn btn-outline btn-sm">Filter</button>
+
+    {% if status_filter or search %}
+      <a href="{{ url_for('dashboard.documents') }}" class="btn btn-outline btn-sm">Clear</a>
+    {% endif %}
+
+    <span class="ml-auto text-muted" style="font-size:0.8rem">
+      {{ pagination.total }} document(s)
+    </span>
+  </form>
+
+  <!-- Table -->
+  {% if records %}
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Doc ID</th>
+          <th>Status</th>
+          <th>Tokens</th>
+          <th>Reviewed</th>
+          <th>Submitted</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for rec in records %}
+        <tr>
+          <td class="doc-id-cell" data-copyable data-value="{{ rec.doc_id }}">
+            {{ rec.doc_id }}
+          </td>
+          <td>
+            <span class="badge {{ rec.status | verdict_color }}">{{ rec.status }}</span>
+          </td>
+          <td class="text-mono" style="color:var(--color-text-muted);font-size:0.82rem">
+            {{ rec.token_count or '—' }}
+          </td>
+          <td>
+            {% if rec.reviewed %}
+              <span style="color:var(--color-success)">✓</span>
+            {% else %}
+              <span class="text-muted">—</span>
+            {% endif %}
+          </td>
+          <td class="text-muted" style="font-size:0.78rem;white-space:nowrap">
+            {{ rec.submitted_at.strftime('%b %d %Y, %H:%M') }}
+          </td>
+          <td>
+            {% if rec.status != 'novel' %}
+              {# Find the most recent comparison for this doc #}
+              <a href="{{ url_for('dashboard.flagged') }}?q={{ rec.doc_id }}"
+                 class="btn btn-outline btn-sm">View Pairs</a>
+            {% else %}
+              <span class="text-muted" style="font-size:0.78rem">Novel</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination">
+    <a href="{{ url_for('dashboard.documents', page=pagination.prev_num, status=status_filter, q=search) }}"
+       class="page-link {% if not pagination.has_prev %}disabled{% endif %}">‹</a>
+
+    {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+      {% if page_num %}
+        <a href="{{ url_for('dashboard.documents', page=page_num, status=status_filter, q=search) }}"
+           class="page-link {% if page_num == pagination.page %}active{% endif %}">{{ page_num }}</a>
+      {% else %}
+        <span class="page-link disabled">…</span>
+      {% endif %}
+    {% endfor %}
+
+    <a href="{{ url_for('dashboard.documents', page=pagination.next_num, status=status_filter, q=search) }}"
+       class="page-link {% if not pagination.has_next %}disabled{% endif %}">›</a>
+
+    <span class="page-info">Page {{ pagination.page }} / {{ pagination.pages }}</span>
+  </div>
+
+  {% else %}
+    <div class="empty-state">
+      <span class="empty-icon">📭</span>
+      <p>No documents found. <a href="{{ url_for('dashboard.submit_document') }}">Submit one now.</a></p>
+    </div>
+  {% endif %}
+
+</div>
+
+{% endblock %}

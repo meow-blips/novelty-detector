@@ -1,0 +1,37 @@
+# ============================================================
+#  Novelty & Duplicate Detection System — Dependencies
+#  Python 3.10+  |  All packages are free & open-source
+# ============================================================
+
+# ── Core NLP / Text Preprocessing ───────────────────────────
+nltk==3.9.1                  # Tokenisation, stopwords, stemming
+spacy==3.8.3                 # Industrial-strength NLP (optional advanced preprocessing)
+
+# ── MinHash / LSH (Lexical Filter) ──────────────────────────
+datasketch==1.6.5            # MinHash signatures + LSH index
+
+# ── Semantic Similarity (Stage 2) ───────────────────────────
+sentence-transformers==3.3.1 # Transformer-based sentence embeddings
+torch==2.5.1                 # Required backend for sentence-transformers
+transformers==4.47.1         # HuggingFace model hub access
+
+# ── Numerical / Scientific Computing ────────────────────────
+numpy==2.2.1                 # Array math, cosine similarity
+scipy==1.14.1                # Spatial distance utilities
+
+# ── Web Dashboard (Phase 3) ─────────────────────────────────
+flask==3.1.0                 # Lightweight web framework for the reviewer UI
+flask-wtf==1.2.2             # CSRF-protected forms for threshold adjustments
+
+# ── Storage & Serialisation ──────────────────────────────────
+sqlalchemy==2.0.36           # ORM for logging results to SQLite
+alembic==1.14.0              # DB schema migrations
+
+# ── Utilities ────────────────────────────────────────────────
+python-dotenv==1.0.1         # Load config from .env files
+pydantic==2.10.4             # Config / data validation
+tqdm==4.67.1                 # Progress bars for batch processing
+loguru==0.7.3                # Structured, levelled logging
+
+# ── Production WSGI server ──────────────────────────────────
+gunicorn==23.0.0             # Required for Procfile-based deploys (Render/Heroku)

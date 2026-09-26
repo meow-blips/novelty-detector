@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block title %}Flagged Pairs — Novelty Detector{% endblock %}
+{% block page_title %}Flagged Pairs{% endblock %}
+
+{% block content %}
+
+<div class="section-card">
+
+  <!-- Filter Bar -->
+  <form method="get" class="filter-bar">
+    <label style="font-size:0.8rem;color:var(--color-text-muted)">Verdict</label>
+    <select name="verdict" onchange="this.form.submit()">
+      <option value="" {% if not verdict_filter %}selected{% endif %}>All</option>
+      <option value="near-duplicate" {% if verdict_filter=='near-duplicate' %}selected{% endif %}>Near-Duplicate</option>
+      <option value="duplicate"      {% if verdict_filter=='duplicate'      %}selected{% endif %}>Duplicate</option>
+    </select>
+
+    <label style="font-size:0.8rem;color:var(--color-text-muted)">Review</label>
+    <select name="review" onchange="this.form.submit()">
+      <option value=""            {% if not review_filter          %}selected{% endif %}>All</option>
+      <option value="pending"     {% if review_filter=='pending'    %}selected{% endif %}>Pending</option>
+      <option value="confirmed"   {% if review_filter=='confirmed'  %}selected{% endif %}>Confirmed</option>
+      <option value="overridden"  {% if review_filter=='overridden' %}selected{% endif %}>Overridden</option>
+    </select>
+
+    {% if verdict_filter or review_filter %}
+      <a href="{{ url_for('dashboard.flagged') }}" class="btn btn-outline btn-sm">Clear</a>
+    {% endif %}
+
+    <span class="ml-auto text-muted" style="font-size:0.8rem">
+      {{ pagination.total }} pair(s)
+    </span>
+  </form>
+
+  <!-- Table -->
+  {% if comparisons %}
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Query Doc</th>
+          <th>Candidate Doc</th>
+          <th>Jaccard</th>
+          <th>Cosine</th>
+          <th>Verdict</th>
+          <th>Review</th>
+          <th>Date</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for cmp in comparisons %}
+        <tr>
+          <td class="text-muted text-mono" style="font-size:0.75rem">{{ cmp.id }}</td>
+
+          <td class="doc-id-cell" data-copyable data-value="{{ cmp.query_doc_id }}">
+            {{ cmp.query_doc_id }}
+          </td>
+
+          <td class="doc-id-cell" data-copyable data-value="{{ cmp.candidate_doc_id }}">
+            {{ cmp.candidate_doc_id }}
+          </td>
+
+          <td class="score-cell">
+            <span class="badge {{ cmp.jaccard_estimate | score_color }}">
+              {{ cmp.jaccard_estimate | pct }}
+            </span>
+          </td>
+
+          <td class="score-cell">
+            {% if cmp.cosine_similarity is not none %}
+              <span class="badge {{ cmp.cosine_similarity | score_color }}">
+                {{ cmp.cosine_similarity | pct }}
+              </span>
+            {% else %}
+              <span class="text-muted">—</span>
+            {% endif %}
+          </td>
+
+          <td>
+            <span class="badge {{ cmp.verdict | verdict_color }}">{{ cmp.verdict }}</span>
+          </td>
+
+          <td>
+            <span class="badge {% if cmp.review_status == 'pending' %}badge-warning{% elif cmp.review_status == 'confirmed' %}badge-success{% else %}badge-info{% endif %}">
+              {{ cmp.review_status }}
+            </span>
+          </td>
+
+          <td class="text-muted" style="font-size:0.78rem;white-space:nowrap">
+            {{ cmp.compared_at.strftime('%b %d, %H:%M') }}
+          </td>
+
+          <td>
+            <a href="{{ url_for('dashboard.review', cmp_id=cmp.id) }}"
+               class="btn btn-outline btn-sm">Review</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination">
+    <a href="{{ url_for('dashboard.flagged', page=pagination.prev_num, verdict=verdict_filter, review=review_filter) }}"
+       class="page-link {% if not pagination.has_prev %}disabled{% endif %}">‹</a>
+
+    {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+      {% if page_num %}
+        <a href="{{ url_for('dashboard.flagged', page=page_num, verdict=verdict_filter, review=review_filter) }}"
+           class="page-link {% if page_num == pagination.page %}active{% endif %}">{{ page_num }}</a>
+      {% else %}
+        <span class="page-link disabled">…</span>
+      {% endif %}
+    {% endfor %}
+
+    <a href="{{ url_for('dashboard.flagged', page=pagination.next_num, verdict=verdict_filter, review=review_filter) }}"
+       class="page-link {% if not pagination.has_next %}disabled{% endif %}">›</a>
+
+    <span class="page-info">
+      Page {{ pagination.page }} / {{ pagination.pages }}
+    </span>
+  </div>
+
+  {% else %}
+    <div class="empty-state">
+      <span class="empty-icon">🎉</span>
+      <p>No flagged pairs match the current filters.</p>
+    </div>
+  {% endif %}
+
+</div><!-- /section-card -->
+{% endblock %}

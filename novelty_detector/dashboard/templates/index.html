@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Novelty Detector{% endblock %}
+{% block page_title %}Overview{% endblock %}
+
+{% block content %}
+
+<!-- ── Stat Cards ──────────────────────────────────────────────────────────── -->
+<div class="stats-grid">
+  <div class="stat-card total">
+    <span class="stat-label">Total Documents</span>
+    <span class="stat-value" id="stat-total">{{ total_docs }}</span>
+  </div>
+  <div class="stat-card novel">
+    <span class="stat-label">Novel</span>
+    <span class="stat-value" id="stat-novel">{{ novel_count }}</span>
+  </div>
+  <div class="stat-card near-dup">
+    <span class="stat-label">Near-Duplicate</span>
+    <span class="stat-value" id="stat-near-dup">{{ near_dup_count }}</span>
+  </div>
+  <div class="stat-card duplicate">
+    <span class="stat-label">Duplicate</span>
+    <span class="stat-value" id="stat-dup">{{ dup_count }}</span>
+  </div>
+  <div class="stat-card pending">
+    <span class="stat-label">Pending Reviews</span>
+    <span class="stat-value" id="stat-pending">{{ pending_reviews }}</span>
+  </div>
+</div>
+
+<!-- ── Body Grid ───────────────────────────────────────────────────────────── -->
+<div style="display:grid; grid-template-columns:1fr 320px; gap:1.2rem; align-items:start;">
+
+  <!-- Recent Activity -->
+  <div class="section-card">
+    <div class="section-header">
+      <span>🚩</span>
+      <h2>Recent Flagged Pairs</h2>
+      <a href="{{ url_for('dashboard.flagged') }}" class="btn btn-outline btn-sm ml-auto">View All</a>
+    </div>
+
+    {% if recent_flags %}
+      <div class="activity-feed">
+        {% for flag in recent_flags %}
+          {% set dot_class = 'danger' if flag.verdict == 'duplicate' else 'warning' %}
+          <a href="{{ url_for('dashboard.review', cmp_id=flag.id) }}"
+             class="activity-item" style="color:inherit;">
+            <span class="activity-dot {{ dot_class }}"></span>
+            <div class="activity-body">
+              <div class="activity-title">
+                <span class="text-mono" style="color:var(--color-info)">{{ flag.query_doc_id }}</span>
+                <span class="text-muted"> matched </span>
+                <span class="text-mono" style="color:var(--color-info)">{{ flag.candidate_doc_id }}</span>
+              </div>
+              <div class="activity-meta">
+                <span class="badge {{ flag.verdict | verdict_color }}">{{ flag.verdict }}</span>
+                &nbsp;Jaccard {{ flag.jaccard_estimate | pct }}
+                {% if flag.cosine_similarity %}· Cosine {{ flag.cosine_similarity | pct }}{% endif %}
+                &nbsp;·&nbsp;{{ flag.review_status }}
+                &nbsp;·&nbsp;{{ flag.compared_at.strftime('%b %d, %H:%M') }}
+              </div>
+            </div>
+            <span class="text-muted" style="font-size:0.8rem">›</span>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <span class="empty-icon">✅</span>
+        <p>No flagged pairs yet. Submit documents to begin analysis.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Right panel: Active Thresholds + Quick Actions -->
+  <div style="display:flex; flex-direction:column; gap:1rem;">
+
+    <!-- Active Thresholds -->
+    <div class="section-card">
+      <div class="section-header">
+        <span>⚙️</span>
+        <h2>Active Thresholds</h2>
+        <a href="{{ url_for('dashboard.threshold_settings') }}" class="btn btn-outline btn-sm ml-auto">Edit</a>
+      </div>
+      <div style="padding:1rem 1.4rem; display:grid; gap:0.9rem;">
+
+        <div class="score-row">
+          <span class="score-row-label">LSH Jaccard (Stage 1)</span>
+          <div class="score-bar-wrap">
+            <div class="score-bar-bg">
+              <div class="score-bar-fill warning"
+                   style="width:{{ (settings.lsh_threshold * 100)|int }}%"></div>
+            </div>
+            <span class="score-bar-label" style="color:var(--color-warning)">
+              {{ settings.lsh_threshold | pct }}
+            </span>
+          </div>
+        </div>
+
+        <div class="score-row">
+          <span class="score-row-label">Semantic Cosine (Stage 2)</span>
+          <div class="score-bar-wrap">
+            <div class="score-bar-bg">
+              <div class="score-bar-fill danger"
+                   style="width:{{ (settings.semantic_threshold * 100)|int }}%"></div>
+            </div>
+            <span class="score-bar-label" style="color:var(--color-danger)">
+              {{ settings.semantic_threshold | pct }}
+            </span>
+          </div>
+        </div>
+
+        <div class="score-row">
+          <span class="score-row-label">Duplicate Cutoff (Jaccard)</span>
+          <div class="score-bar-wrap">
+            <div class="score-bar-bg">
+              <div class="score-bar-fill danger"
+                   style="width:{{ (settings.duplicate_jaccard_threshold * 100)|int }}%"></div>
+            </div>
+            <span class="score-bar-label" style="color:var(--color-danger)">
+              {{ settings.duplicate_jaccard_threshold | pct }}
+            </span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="section-card">
+      <div class="section-header"><span>⚡</span><h2>Quick Actions</h2></div>
+      <div style="padding:1rem 1.4rem; display:grid; gap:0.6rem;">
+        <a href="{{ url_for('dashboard.submit_document') }}" class="btn btn-primary">
+          📤 Submit New Document
+        </a>
+        <a href="{{ url_for('dashboard.flagged') }}?review=pending" class="btn btn-outline">
+          🔎 Review Pending Pairs
+        </a>
+        <a href="{{ url_for('dashboard.documents') }}" class="btn btn-outline">
+          📄 Browse All Documents
+        </a>
+      </div>
+    </div>
+
+  </div><!-- /right panel -->
+</div><!-- /body grid -->
+
+{% endblock %}
