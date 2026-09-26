@@ -5,7 +5,6 @@
 
 # ── Core NLP / Text Preprocessing ───────────────────────────
 nltk==3.9.1                  # Tokenisation, stopwords, stemming
-spacy==3.8.3                 # Industrial-strength NLP (optional advanced preprocessing)
 
 # ── MinHash / LSH (Lexical Filter) ──────────────────────────
 datasketch==1.6.5            # MinHash signatures + LSH index
