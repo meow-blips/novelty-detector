@@ -15,8 +15,8 @@ sentence-transformers==3.3.1 # Transformer-based sentence embeddings
 transformers==4.47.1         # HuggingFace model hub access
 
 # ── Numerical / Scientific Computing ────────────────────────
-numpy==2.2.1                 # Array math, cosine similarity
-scipy==1.14.1                # Spatial distance utilities
+numpy>=2.2.1                 # Array math, cosine similarity
+scipy>=1.14.1                # Spatial distance utilities
 
 # ── Web Dashboard (Phase 3) ─────────────────────────────────
 flask==3.1.0                 # Lightweight web framework for the reviewer UI
